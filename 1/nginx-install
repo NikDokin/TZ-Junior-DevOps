@@ -1,0 +1,12 @@
+# Обновление информации о пакетах
+sudo apt update
+# Установка Nginx (флаг -y для подтверждения установки)
+sudo apt install -y nginx
+
+# Включение автозапуска 
+sudo systemctl enable nginx
+# Запуск сервиса
+sudo systemctl start nginx
+
+# Проверка статуса
+systemctl status nginx
