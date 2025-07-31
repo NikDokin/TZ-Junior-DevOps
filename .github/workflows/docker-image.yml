@@ -1,18 +1,40 @@
-name: Docker Image CI
+name: Docker Build and Test
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+on:     
+  workflow_dispatch:
 
 jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
+  build-and-test:
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: docker build -t nginx-devops .
+
+    - name: Run container in background
+      run: |
+        docker run -d -p 8080:80 --name nginx-test nginx-devops
+        sleep 5 
+
+    - name: Check Nginx installation
+      run: |
+        docker exec which nginx && nginx -v
+
+    - name: Send curl request
+      run: |
+        response=$(curl -s http://localhost:8080)
+        echo "Response: $response"
+        if [[ "$response" != "Hello from DevOps!" ]]; then
+          echo "Test failed: Unexpected response"
+          exit 1
+        else
+          echo "Test passed: Correct response"
+        fi
+
+    - name: Cleanup containers
+      if: always()
+      run: |
+        docker stop nginx-test || true
+        docker rm nginx-test || true
